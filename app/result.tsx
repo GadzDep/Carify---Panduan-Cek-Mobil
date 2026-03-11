@@ -75,7 +75,7 @@ export default function ResultScreen() {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.center}>
-          <Text style={{ fontFamily: "PoppinsRegular" }}>
+          <Text style={{ fontFamily: "PoppinsMedium" }}>
             Data pengecekan tidak ditemukan
           </Text>
           <TouchableOpacity onPress={() => router.replace("/")}>
@@ -503,7 +503,7 @@ const styles = StyleSheet.create({
   },
   statusEmoji: {
     fontSize: 32,
-    fontFamily: "PoppinsRegular", // Diganti
+    fontFamily: "PoppinsMedium", // Diganti
   },
   statusLabel: {
     fontSize: 18,

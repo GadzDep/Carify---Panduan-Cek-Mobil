@@ -119,14 +119,14 @@ export default function InspectionScreen() {
               style={{ padding: 8 }}
             >
               <Text
-                style={{ color: Colors.primary, fontFamily: "PoppinsRegular" }}
+                style={{ color: Colors.primary, fontFamily: "PoppinsMedium" }}
               >
                 Kembali
               </Text>
             </TouchableOpacity>
           </View>
         ) : (
-          <Text style={{ fontFamily: "PoppinsRegular" }}>
+          <Text style={{ fontFamily: "PoppinsMedium" }}>
             Memuat pengecekan...
           </Text>
         )}
