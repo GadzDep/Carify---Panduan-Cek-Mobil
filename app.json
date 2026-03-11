@@ -1,48 +1,64 @@
 {
   "expo": {
-    "name": "car-inspector",
-    "slug": "car-inspector",
+    "name": "Carify – Panduan Cek Mobil",
+    "slug": "carify_panduan_cek_mobil",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "carinspector",
+    "scheme": "rork-app",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/images/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": false,
+      "bundleIdentifier": "rpl.skansaka.carify_panduan_cek_mobil"
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "backgroundImage": "./assets/images/android-icon-background.png",
-        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "package": "rpl.skansaka.carify_panduan_cek_mobil"
     },
     "web": {
-      "output": "static",
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
-      "expo-router",
       [
-        "expo-splash-screen",
+        "expo-router",
         {
-          "image": "./assets/images/splash-icon.png",
-          "imageWidth": 200,
-          "resizeMode": "contain",
-          "backgroundColor": "#ffffff",
-          "dark": {
-            "backgroundColor": "#000000"
-          }
+          "origin": "https://rork.com/"
         }
-      ]
+      ],
+      [
+        "expo-font",
+        {
+          "fonts": [
+            "../assets/fonts/Poppins-Regular.ttf",
+            "../assets/fonts/Poppins-Medium.ttf",
+            "../assets/fonts/Poppins-SemiBold.ttf",
+            "../assets/fonts/Poppins-Bold.ttf",
+            "../assets/fonts/Poppins-ExtraBold.ttf"
+          ]
+        }
+      ],
+      "expo-web-browser"
     ],
     "experiments": {
-      "typedRoutes": true,
-      "reactCompiler": true
-    }
+      "typedRoutes": true
+    },
+    "extra": {
+      "router": {
+        "origin": "https://rork.com/"
+      },
+      "eas": {
+        "projectId": "f8f81558-90b6-4bb0-b9d3-f4862b6b60b7"
+      }
+    },
+    "owner": ""
   }
 }

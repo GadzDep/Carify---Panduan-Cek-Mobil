@@ -1,24 +1,29 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { Stack } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import 'react-native-reanimated';
-
-import { useColorScheme } from '@/hooks/use-color-scheme';
-
-export const unstable_settings = {
-  anchor: '(tabs)',
-};
+import { Stack } from "expo-router";
+import { StatusBar } from "expo-status-bar";
+import { useFonts } from "expo-font";
+import { View, Text } from "react-native";
+import { InspectionProvider } from "@/context/InspectionContext";
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
+const [fontsLoaded] = useFonts({
+  PoppinsMedium: require("../assets/fonts/Poppins-Medium.ttf"),
+  PoppinsSemiBold: require("../assets/fonts/Poppins-SemiBold.ttf"),
+  PoppinsBold: require("../assets/fonts/Poppins-Bold.ttf"),
+  PoppinsExtraBold: require("../assets/fonts/Poppins-ExtraBold.ttf"),
+});
+
+  if (!fontsLoaded) {
+    return (
+      <View style={{flex:1,justifyContent:"center",alignItems:"center"}}>
+        <Text>Loading...</Text>
+      </View>
+    );
+  }
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
-      </Stack>
+    <InspectionProvider>
+      <Stack screenOptions={{ headerShown: false }} />
       <StatusBar style="auto" />
-    </ThemeProvider>
+    </InspectionProvider>
   );
 }
