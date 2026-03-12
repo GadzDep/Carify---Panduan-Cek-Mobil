@@ -23,11 +23,38 @@ const TRANSMISSION_OPTIONS = [
 
 const CAR_DATABASE: Record<string, string[]> = {
   Toyota: [
-    "Avanza", "Veloz", "Rush", "Fortuner", "Innova Zenix", "Innova Reborn",
-    "Yaris Cross", "Raize", "Agya", "Calya", "Alphard", "Vellfire", "Land Cruiser",
+    "Avanza",
+    "Veloz",
+    "Rush",
+    "Fortuner",
+    "Innova Zenix",
+    "Innova Reborn",
+    "Yaris Cross",
+    "Raize",
+    "Agya",
+    "Calya",
+    "Alphard",
+    "Vellfire",
+    "Land Cruiser",
   ],
-  Honda: ["Brio", "HR-V", "BR-V", "CR-V", "WR-V", "City Hatchback", "Civic RS", "Mobilio"],
-  Mitsubishi: ["Xpander", "Xpander Cross", "Pajero Sport", "Xforce", "L300", "Triton"],
+  Honda: [
+    "Brio",
+    "HR-V",
+    "BR-V",
+    "CR-V",
+    "WR-V",
+    "City Hatchback",
+    "Civic RS",
+    "Mobilio",
+  ],
+  Mitsubishi: [
+    "Xpander",
+    "Xpander Cross",
+    "Pajero Sport",
+    "Xforce",
+    "L300",
+    "Triton",
+  ],
   Daihatsu: ["Xenia", "Terios", "Ayla", "Sigra", "Rocky", "Gran Max"],
   Suzuki: ["Ertiga", "XL7", "Grand Vitara", "Jimny", "Baleno", "S-Presso"],
   Wuling: ["Almaz", "Alvez", "Air EV", "Binguo EV", "Cloud EV"],
@@ -73,7 +100,7 @@ export default function CarForm() {
 
   const [brandSuggestions, setBrandSuggestions] = useState<string[]>([]);
   const [modelSuggestions, setModelSuggestions] = useState<string[]>([]);
-  
+
   // State baru untuk memunculkan error tulisan merah
   const [showErrors, setShowErrors] = useState(false);
 
@@ -97,7 +124,7 @@ export default function CarForm() {
     if (showErrors) setShowErrors(false);
   };
 
-  const isFormValid = 
+  const isFormValid =
     carData.brand.trim() !== "" &&
     carData.type.trim() !== "" &&
     carData.year.trim() !== "" &&
@@ -109,7 +136,7 @@ export default function CarForm() {
     if (!isFormValid) {
       // Munculkan tulisan merah jika ada yang kosong
       setShowErrors(true);
-      return; 
+      return;
     }
 
     let targetId = id as string;
@@ -156,8 +183,8 @@ export default function CarForm() {
               <Text style={styles.label}>Merk Mobil</Text>
               <TextInput
                 style={[
-                  styles.input, 
-                  showErrors && !carData.brand.trim() && styles.inputError
+                  styles.input,
+                  showErrors && !carData.brand.trim() && styles.inputError,
                 ]}
                 placeholder="Pilih atau ketik merk..."
                 placeholderTextColor={Colors.textMuted}
@@ -177,7 +204,7 @@ export default function CarForm() {
               {showErrors && !carData.brand.trim() && (
                 <Text style={styles.errorText}>* Merk mobil wajib diisi</Text>
               )}
-              
+
               {brandSuggestions.length > 0 && (
                 <View style={styles.suggestionBox}>
                   {brandSuggestions.map((item) => (
@@ -201,8 +228,8 @@ export default function CarForm() {
               <Text style={styles.label}>Tipe/Model</Text>
               <TextInput
                 style={[
-                  styles.input, 
-                  showErrors && !carData.type.trim() && styles.inputError
+                  styles.input,
+                  showErrors && !carData.type.trim() && styles.inputError,
                 ]}
                 placeholder="Pilih atau ketik tipe..."
                 placeholderTextColor={Colors.textMuted}
@@ -250,12 +277,13 @@ export default function CarForm() {
                 <Text style={styles.label}>Tahun</Text>
                 <TextInput
                   style={[
-                    styles.input, 
-                    showErrors && !carData.year.trim() && styles.inputError
+                    styles.input,
+                    showErrors && !carData.year.trim() && styles.inputError,
                   ]}
                   placeholder="2024"
                   placeholderTextColor={Colors.textMuted}
                   keyboardType="number-pad"
+                  maxLength={4}
                   value={carData.year}
                   onChangeText={(t) =>
                     handleChange("year", t.replace(/\D/g, ""))
@@ -269,8 +297,8 @@ export default function CarForm() {
                 <Text style={styles.label}>Warna</Text>
                 <TextInput
                   style={[
-                    styles.input, 
-                    showErrors && !carData.color.trim() && styles.inputError
+                    styles.input,
+                    showErrors && !carData.color.trim() && styles.inputError,
                   ]}
                   placeholder="Contoh: Hitam"
                   placeholderTextColor={Colors.textMuted}
@@ -314,8 +342,8 @@ export default function CarForm() {
               <Text style={styles.label}>Kilometer</Text>
               <TextInput
                 style={[
-                  styles.input, 
-                  showErrors && !carData.mileage.trim() && styles.inputError
+                  styles.input,
+                  showErrors && !carData.mileage.trim() && styles.inputError,
                 ]}
                 placeholder="10.000"
                 placeholderTextColor={Colors.textMuted}
@@ -337,8 +365,10 @@ export default function CarForm() {
               <Text style={styles.label}>Nomor Polisi</Text>
               <TextInput
                 style={[
-                  styles.input, 
-                  showErrors && !carData.plateNumber.trim() && styles.inputError
+                  styles.input,
+                  showErrors &&
+                    !carData.plateNumber.trim() &&
+                    styles.inputError,
                 ]}
                 placeholder="B 1234 ABC"
                 placeholderTextColor={Colors.textMuted}
@@ -358,8 +388,8 @@ export default function CarForm() {
       </KeyboardAvoidingView>
 
       <View style={styles.footer}>
-        <TouchableOpacity 
-          style={styles.continueBtn} 
+        <TouchableOpacity
+          style={styles.continueBtn}
           onPress={handleContinue}
           activeOpacity={0.7}
         >
@@ -407,7 +437,7 @@ const styles = StyleSheet.create({
   },
   // Style baru untuk kotak yang error (merah)
   inputError: {
-    borderColor: "#ef4444", 
+    borderColor: "#ef4444",
     backgroundColor: "#fef2f2",
   },
   // Style baru untuk tulisan error merah di bawah kolom

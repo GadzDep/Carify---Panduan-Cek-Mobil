@@ -14,7 +14,7 @@ import {
   Share2,
   XCircle,
 } from "lucide-react-native";
-import { useEffect, useState } from "react"; // Tambahkan useEffect di sini
+import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -29,6 +29,8 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+// Gunakan wrapper buatan kita agar aman di Web & Mobile
+import ImageViewer from "../components/ImageViewer";
 import { ProgressBar } from "@/components/ProgressBar";
 import { ScoreRing } from "@/components/ScoreRing";
 import { Colors } from "@/constants/colors";
@@ -49,18 +51,20 @@ export default function ResultScreen() {
     useInspection();
 
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
-  const [selectedPhoto, setSelectedPhoto] = useState<any>(null);
 
-  // ---> PERBAIKAN: Gunakan useEffect untuk set inspection berdasarkan ID <---
+  // State untuk react-native-image-viewing
+  const [isViewerVisible, setIsViewerVisible] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
   useEffect(() => {
     if (id) {
       setInspectionById(id);
     }
   }, [id, setInspectionById]);
 
-  // Gunakan currentInspection yang sudah dipaksa update oleh useEffect
   const inspection = currentInspection;
 
+  // Memetakan foto sekaligus mendeteksi masalah kritis yang akurat
   const photos =
     inspection?.categories?.flatMap((cat) =>
       (cat.items || [])
@@ -68,6 +72,9 @@ export default function ResultScreen() {
         .map((item) => ({
           uri: item.photoUri!,
           question: item.question || "Foto Pengecekan",
+          // Logika mendeteksi foto dengan masalah kritis (berdasarkan context kamu)
+          isCriticalIssue:
+            item.riskIndicator === "critical" && item.answer === "no",
         })),
     ) || [];
 
@@ -109,23 +116,18 @@ export default function ResultScreen() {
     setIsGeneratingPDF(true);
 
     try {
-      // 1. Generate HTML
       const html = await generateInspectionHTML(inspection, result, photos);
-
-      // 2. Langsung Print ke PDF (Akan otomatis masuk folder aman bawaan Expo)
       const { uri } = await Print.printToFileAsync({
         html,
         base64: false,
       });
 
-      // 3. Jaga-jaga kalau dibuka di web
       if (Platform.OS === "web") {
         window.open(uri, "_blank");
         setIsGeneratingPDF(false);
         return;
       }
 
-      // 4. LANGSUNG SHARE URI ASLINYA! Tanpa ribet dipindah atau di-rename.
       const isAvailable = await Sharing.isAvailableAsync();
       if (isAvailable) {
         await Sharing.shareAsync(uri, {
@@ -155,7 +157,7 @@ export default function ResultScreen() {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity
-          onPress={() => router.replace("/history")} // ⭐ Diubah ke halaman riwayat
+          onPress={() => router.replace("/history")}
           style={styles.backBtn}
         >
           <ChevronLeft size={24} color={Colors.text} />
@@ -287,11 +289,17 @@ export default function ResultScreen() {
               {photos.map((photo, index) => (
                 <TouchableOpacity
                   key={index}
-                  onPress={() => setSelectedPhoto(photo)}
+                  onPress={() => {
+                    setCurrentImageIndex(index);
+                    setIsViewerVisible(true);
+                  }}
                 >
                   <Image
                     source={{ uri: photo.uri }}
-                    style={styles.galleryImage}
+                    style={[
+                      styles.galleryImage,
+                      photo.isCriticalIssue && styles.galleryImageCritical,
+                    ]}
                   />
                 </TouchableOpacity>
               ))}
@@ -402,33 +410,20 @@ export default function ResultScreen() {
         <View style={styles.bottomPadding} />
       </ScrollView>
 
-      {/* PREVIEW FOTO */}
-      {selectedPhoto && (
-        <View style={styles.photoModal}>
-          <TouchableOpacity
-            style={styles.closeBtn}
-            onPress={() => setSelectedPhoto(null)}
-          >
-            <Text
-              style={{
-                color: "white",
-                fontSize: 22,
-                fontFamily: "PoppinsBold",
-              }}
-            >
-              ✕
+      {/* REACT NATIVE IMAGE VIEWING COMPONENT */}
+      <ImageViewer
+        images={photos}
+        imageIndex={currentImageIndex}
+        visible={isViewerVisible}
+        onRequestClose={() => setIsViewerVisible(false)}
+        FooterComponent={({ imageIndex }: any) => (
+          <View style={styles.captionContainer}>
+            <Text style={styles.photoCaption}>
+              {photos[imageIndex]?.question || "Foto Pengecekan"}
             </Text>
-          </TouchableOpacity>
-
-          <Image
-            source={{ uri: selectedPhoto.uri }}
-            style={styles.fullPhoto}
-            resizeMode="contain"
-          />
-
-          <Text style={styles.photoCaption}>{selectedPhoto.question}</Text>
-        </View>
-      )}
+          </View>
+        )}
+      />
     </SafeAreaView>
   );
 }
@@ -446,7 +441,7 @@ const styles = StyleSheet.create({
   },
   linkText: {
     color: Colors.primary,
-    fontFamily: "PoppinsSemiBold", // Diganti
+    fontFamily: "PoppinsSemiBold",
   },
   header: {
     flexDirection: "row",
@@ -461,7 +456,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 17,
     color: Colors.text,
-    fontFamily: "PoppinsBold", // Diganti
+    fontFamily: "PoppinsBold",
   },
   headerActions: {
     flexDirection: "row",
@@ -484,12 +479,12 @@ const styles = StyleSheet.create({
   scoreTitle: {
     fontSize: 16,
     color: "rgba(255,255,255,0.9)",
-    fontFamily: "PoppinsSemiBold", // Diganti
+    fontFamily: "PoppinsSemiBold",
   },
   scoreDate: {
     fontSize: 12,
     color: "rgba(255,255,255,0.7)",
-    fontFamily: "PoppinsBold", // Diganti
+    fontFamily: "PoppinsBold",
   },
   scoreMain: {
     flexDirection: "row",
@@ -503,11 +498,11 @@ const styles = StyleSheet.create({
   },
   statusEmoji: {
     fontSize: 32,
-    fontFamily: "PoppinsMedium", // Diganti
+    fontFamily: "PoppinsMedium",
   },
   statusLabel: {
     fontSize: 18,
-    fontFamily: "PoppinsBold", // Diganti
+    fontFamily: "PoppinsBold",
   },
   criticalBadge: {
     flexDirection: "row",
@@ -522,7 +517,7 @@ const styles = StyleSheet.create({
   criticalText: {
     fontSize: 12,
     color: Colors.warning,
-    fontFamily: "PoppinsSemiBold", // Diganti
+    fontFamily: "PoppinsSemiBold",
   },
   carInfo: {
     borderTopWidth: 1,
@@ -533,12 +528,12 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: "white",
     marginBottom: 4,
-    fontFamily: "PoppinsBold", // Diganti
+    fontFamily: "PoppinsBold",
   },
   carDetails: {
     fontSize: 14,
     color: "rgba(255,255,255,0.8)",
-    fontFamily: "PoppinsMedium", // Diganti
+    fontFamily: "PoppinsMedium",
   },
   section: {
     paddingHorizontal: 20,
@@ -548,7 +543,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: Colors.text,
     marginBottom: 12,
-    fontFamily: "PoppinsBold", // Diganti
+    fontFamily: "PoppinsBold",
   },
   warningCard: {
     flexDirection: "row",
@@ -566,13 +561,13 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: Colors.warning,
     marginBottom: 8,
-    fontFamily: "PoppinsBold", // Diganti
+    fontFamily: "PoppinsBold",
   },
   warningText: {
     fontSize: 13,
     color: Colors.textSecondary,
     marginBottom: 4,
-    fontFamily: "PoppinsMedium", // Diganti
+    fontFamily: "PoppinsMedium",
   },
   criticalItem: {
     flexDirection: "row",
@@ -587,7 +582,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 13,
     color: Colors.text,
-    fontFamily: "PoppinsMedium", // Diganti
+    fontFamily: "PoppinsMedium",
   },
   categoryCard: {
     backgroundColor: Colors.card,
@@ -606,17 +601,17 @@ const styles = StyleSheet.create({
   categoryName: {
     fontSize: 15,
     color: Colors.text,
-    fontFamily: "PoppinsSemiBold", // Diganti
+    fontFamily: "PoppinsSemiBold",
   },
   categoryScore: {
     fontSize: 18,
-    fontFamily: "PoppinsBold", // Diganti
+    fontFamily: "PoppinsBold",
   },
   categoryWeight: {
     fontSize: 12,
     color: Colors.textMuted,
     marginTop: 8,
-    fontFamily: "PoppinsMedium", // Diganti
+    fontFamily: "PoppinsMedium",
   },
   recommendationCard: {
     backgroundColor: Colors.card,
@@ -631,14 +626,14 @@ const styles = StyleSheet.create({
     color: Colors.text,
     marginTop: 12,
     marginBottom: 8,
-    fontFamily: "PoppinsBold", // Diganti
+    fontFamily: "PoppinsBold",
   },
   recommendationText: {
     fontSize: 14,
     color: Colors.textSecondary,
     textAlign: "center",
     lineHeight: 20,
-    fontFamily: "PoppinsMedium", // Diganti
+    fontFamily: "PoppinsMedium",
   },
   actionSection: {
     paddingHorizontal: 20,
@@ -662,12 +657,12 @@ const styles = StyleSheet.create({
   actionBtnText: {
     fontSize: 16,
     color: Colors.primary,
-    fontFamily: "PoppinsSemibold", // Diganti
+    fontFamily: "PoppinsSemibold",
   },
   actionBtnTextPrimary: {
     fontSize: 16,
     color: "white",
-    fontFamily: "PoppinsBold", // Diganti
+    fontFamily: "PoppinsBold",
   },
   actionBtnDisabled: {
     opacity: 0.7,
@@ -684,7 +679,7 @@ const styles = StyleSheet.create({
   galleryTitle: {
     fontSize: 18,
     marginBottom: 12,
-    fontFamily: "PoppinsBold", // Diganti
+    fontFamily: "PoppinsBold",
   },
   galleryGrid: {
     flexDirection: "row",
@@ -695,31 +690,33 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     borderRadius: 12,
+    borderWidth: 0,
   },
-  photoModal: {
+  galleryImageCritical: {
+    borderWidth: 3,
+    borderColor: Colors.danger, // Warna bingkai merah
+  },
+  // Style khusus untuk caption dari react-native-image-viewing
+  captionContainer: {
+    // Tambahkan baris ini supaya posisinya melayang
     position: "absolute",
-    top: 0,
+    bottom: 40,
     left: 0,
     right: 0,
-    bottom: 0,
-    backgroundColor: "rgba(0,0,0,0.9)",
-    justifyContent: "center",
     alignItems: "center",
-  },
-  fullPhoto: {
-    width: "90%",
-    height: "70%",
+    justifyContent: "center",
+    zIndex: 10,
   },
   photoCaption: {
     color: "white",
-    marginTop: 12,
     textAlign: "center",
-    paddingHorizontal: 20,
-    fontFamily: "PoppinsMedium", // Diganti
-  },
-  closeBtn: {
-    position: "absolute",
-    top: 50,
-    right: 20,
+    fontFamily: "PoppinsMedium",
+    backgroundColor: "rgba(0,0,0,0.6)",
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    overflow: "hidden",
+    // Tambahkan margin supaya teksnya tidak nempel ke pinggir layar kalau kepanjangan
+    marginHorizontal: 20,
   },
 });
