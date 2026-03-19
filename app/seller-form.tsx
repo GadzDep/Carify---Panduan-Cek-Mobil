@@ -47,27 +47,41 @@ export default function SellerForm() {
   const navigation = useNavigation();
   const { id } = useLocalSearchParams();
 
-  // ⭐ Cukup panggil ini saja, nggak butuh saveInspection lagi!
-  const { currentInspection, updateSellerTransparency } = useInspection();
+  const { currentInspection, updateSellerTransparency, getInspectionById } = useInspection();
 
-  const validId = id || currentInspection?.id;
+  // Pastikan kita mengambil data dari ID yang benar (url param prioritas)
+  const validId = id as string || currentInspection?.id;
 
-  const [sellerData, setSellerData] = useState<SellerTransparency>(
-    currentInspection?.sellerTransparency || {
-      hasAccident: false,
-      hasFlood: false,
-      regularService: false,
-      taxActive: false,
-      readyForWorkshopCheck: false,
-    },
-  );
+  // Set default state kosong di awal
+  const [sellerData, setSellerData] = useState<SellerTransparency>({
+    hasAccident: false,
+    hasFlood: false,
+    regularService: false,
+    taxActive: false,
+    readyForWorkshopCheck: false,
+  });
 
-  // Sync data saat load/edit
+  // LOGIKA SYNC & RESET YANG DIPERBAIKI
   useEffect(() => {
-    if (currentInspection?.sellerTransparency) {
-      setSellerData(currentInspection.sellerTransparency);
+    // Cari data yang relevan dengan ID di URL
+    const activeData = validId && currentInspection?.id === validId 
+      ? currentInspection 
+      : (validId ? getInspectionById(validId) : null);
+
+    // Cek apakah data seller transparency untuk mobil ini benar-benar ada
+    if (activeData?.sellerTransparency) {
+      setSellerData(activeData.sellerTransparency);
+    } else {
+      // JIKA KOSONG (Cek Mobil Baru), RESET FORM!
+      setSellerData({
+        hasAccident: false,
+        hasFlood: false,
+        regularService: false,
+        taxActive: false,
+        readyForWorkshopCheck: false,
+      });
     }
-  }, [currentInspection?.sellerTransparency]);
+  }, [validId, currentInspection?.id]); // Terpicu jika ID berubah
 
   const handleToggle = (key: keyof SellerTransparency) => {
     setSellerData((prev) => ({

@@ -37,10 +37,25 @@ const FEATURES = [
 
 export default function Dashboard() {
   const router = useRouter();
-  const { deleteAllInspections } = useInspection();
+
+  // ---> AMBIL createInspection DI SINI <---
+  const { createInspection } = useInspection();
+
+  // ---> FUNGSI BARU UNTUK HANDLE KLIK <---
+  const handleStartInspection = async () => {
+    try {
+      // 1. Bikin inspeksi baru (otomatis reset data lama)
+      await createInspection("buy");
+
+      // 2. Baru pindah ke form mobil
+      router.push("/car-form");
+    } catch (error) {
+      console.error("Gagal memulai inspeksi:", error);
+    }
+  };
 
   return (
-    <SafeAreaView style={styles.container} edges={["top"]}>
+    <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Header */}
         <LinearGradient
@@ -89,7 +104,7 @@ export default function Dashboard() {
         <View style={styles.ctaContainer}>
           <TouchableOpacity
             style={styles.ctaButton}
-            onPress={() => router.push("/car-form")}
+            onPress={handleStartInspection} // ---> PANGGIL FUNGSI DI SINI <---
             activeOpacity={0.8}
           >
             <LinearGradient
@@ -106,6 +121,7 @@ export default function Dashboard() {
   );
 }
 
+// ... styles dibiarkan sama seperti punya Mas ...
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -130,13 +146,13 @@ const styles = StyleSheet.create({
     fontSize: 32,
     color: "white",
     letterSpacing: 1,
-    fontFamily: "PoppinsExtraBold", // Sesuai alias di _layout
+    fontFamily: "PoppinsExtraBold",
   },
   tagline: {
     fontSize: 16,
     color: "rgba(255,255,255,0.9)",
     textAlign: "center",
-    fontFamily: "PoppinsMedium", // Sesuai alias di _layout
+    fontFamily: "PoppinsMedium",
   },
   section: {
     padding: 20,
@@ -145,13 +161,13 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: Colors.text,
     marginBottom: 16,
-    fontFamily: "PoppinsBold", // Sesuai alias di _layout
+    fontFamily: "PoppinsBold",
   },
   description: {
     fontSize: 14,
     color: Colors.textSecondary,
     lineHeight: 22,
-    fontFamily: "PoppinsMedium", // Menggunakan Poppins Regular (alias "Poppins")
+    fontFamily: "PoppinsMedium",
   },
   featuresGrid: {
     flexDirection: "row",

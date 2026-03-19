@@ -10,7 +10,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter, useLocalSearchParams } from "expo-router";
-import { ChevronLeft, Car } from "lucide-react-native";
+import { ChevronLeft, Car, HelpCircle, AlertTriangle } from "lucide-react-native";
 import { Colors } from "@/constants/colors";
 import { useInspection } from "@/context/InspectionContext";
 import { useState, useEffect, useMemo } from "react";
@@ -101,8 +101,10 @@ export default function CarForm() {
   const [brandSuggestions, setBrandSuggestions] = useState<string[]>([]);
   const [modelSuggestions, setModelSuggestions] = useState<string[]>([]);
 
-  // State baru untuk memunculkan error tulisan merah
+  // State untuk error
   const [showErrors, setShowErrors] = useState(false);
+  // State untuk Tooltip
+  const [showTooltip, setShowTooltip] = useState<string | null>(null);
 
   useEffect(() => {
     if (activeData?.carData) setCarData(activeData.carData);
@@ -120,7 +122,6 @@ export default function CarForm() {
       [field]: value,
       ...(field === "brand" ? { type: "" } : {}),
     }));
-    // Sembunyikan pesan error kalau user mulai ngetik lagi
     if (showErrors) setShowErrors(false);
   };
 
@@ -134,7 +135,6 @@ export default function CarForm() {
 
   const handleContinue = async () => {
     if (!isFormValid) {
-      // Munculkan tulisan merah jika ada yang kosong
       setShowErrors(true);
       return;
     }
@@ -149,7 +149,7 @@ export default function CarForm() {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={["top"]}>
+    <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
       <View style={styles.header}>
         <TouchableOpacity
           onPress={() => router.replace("/(tabs)")}
@@ -180,7 +180,20 @@ export default function CarForm() {
           <View style={styles.form}>
             {/* MERK MOBIL */}
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Merk Mobil</Text>
+              <View style={styles.labelContainer}>
+                <Text style={styles.label}>Merk Mobil</Text>
+                <TouchableOpacity onPress={() => setShowTooltip(showTooltip === "brand" ? null : "brand")}>
+                  <HelpCircle size={18} color={Colors.primary} />
+                </TouchableOpacity>
+              </View>
+
+              {showTooltip === "brand" && (
+                <View style={styles.tooltip}>
+                  <AlertTriangle size={16} color={Colors.warning} />
+                  <Text style={styles.tooltipText}>{"Lihat tulisan nama mobil di bagian depan, belakang, atau di STNK. Pilih merk mobilnya, jika tidak tersedia bisa tulis manual."}</Text>
+                </View>
+              )}
+
               <TextInput
                 style={[
                   styles.input,
@@ -225,7 +238,20 @@ export default function CarForm() {
 
             {/* TIPE MOBIL */}
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Tipe/Model</Text>
+              <View style={styles.labelContainer}>
+                <Text style={styles.label}>Tipe/Model</Text>
+                <TouchableOpacity onPress={() => setShowTooltip(showTooltip === "type" ? null : "type")}>
+                  <HelpCircle size={18} color={Colors.primary} />
+                </TouchableOpacity>
+              </View>
+
+              {showTooltip === "type" && (
+                <View style={styles.tooltip}>
+                  <AlertTriangle size={16} color={Colors.warning} />
+                  <Text style={styles.tooltipText}>{"Lihat tulisan tipe mobil di belakang mobil atau di STNK (contohnya: Avanza, Brio)."}</Text>
+                </View>
+              )}
+
               <TextInput
                 style={[
                   styles.input,
@@ -274,7 +300,18 @@ export default function CarForm() {
             {/* TAHUN & WARNA */}
             <View style={styles.row}>
               <View style={{ flex: 1, gap: 6 }}>
-                <Text style={styles.label}>Tahun</Text>
+                <View style={styles.labelContainer}>
+                  <Text style={styles.label}>Tahun</Text>
+                  <TouchableOpacity onPress={() => setShowTooltip(showTooltip === "year" ? null : "year")}>
+                    <HelpCircle size={18} color={Colors.primary} />
+                  </TouchableOpacity>
+                </View>
+                {showTooltip === "year" && (
+                  <View style={styles.tooltip}>
+                    <AlertTriangle size={16} color={Colors.warning} />
+                    <Text style={styles.tooltipText}>{"Cek di STNK, tulis tahun mobil dibuat (contohnya: 2020)\nTulis angka 4 digit seperti yang ada di STNK."}</Text>
+                  </View>
+                )}
                 <TextInput
                   style={[
                     styles.input,
@@ -293,8 +330,20 @@ export default function CarForm() {
                   <Text style={styles.errorText}>* Wajib diisi</Text>
                 )}
               </View>
+
               <View style={{ flex: 1, gap: 6 }}>
-                <Text style={styles.label}>Warna</Text>
+                <View style={styles.labelContainer}>
+                  <Text style={styles.label}>Warna</Text>
+                  <TouchableOpacity onPress={() => setShowTooltip(showTooltip === "color" ? null : "color")}>
+                    <HelpCircle size={18} color={Colors.primary} />
+                  </TouchableOpacity>
+                </View>
+                {showTooltip === "color" && (
+                  <View style={styles.tooltip}>
+                    <AlertTriangle size={16} color={Colors.warning} />
+                    <Text style={styles.tooltipText}>{"Lihat warna mobil atau cek di STNK bagian warna. Tulis sesuai yang terlihat (contohnya: Hitam)."}</Text>
+                  </View>
+                )}
                 <TextInput
                   style={[
                     styles.input,
@@ -311,8 +360,22 @@ export default function CarForm() {
               </View>
             </View>
 
+            {/* TRANSMISI */}
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Transmisi</Text>
+              <View style={styles.labelContainer}>
+                <Text style={styles.label}>Transmisi</Text>
+                <TouchableOpacity onPress={() => setShowTooltip(showTooltip === "transmission" ? null : "transmission")}>
+                  <HelpCircle size={18} color={Colors.primary} />
+                </TouchableOpacity>
+              </View>
+
+              {showTooltip === "transmission" && (
+                <View style={styles.tooltip}>
+                  <AlertTriangle size={16} color={Colors.warning} />
+                  <Text style={styles.tooltipText}>{"Lihat pedal dan tuas mobil:\n - Manual: 3 Pedal (kopling, rem, gas), tuas ada angka 1-5/6 dan R.\n - Otomatis: 2 pedal (rem dan gas), tuas bertanda P-R-N-D."}</Text>
+                </View>
+              )}
+
               <View style={styles.transmissionContainer}>
                 {TRANSMISSION_OPTIONS.map((opt) => (
                   <TouchableOpacity
@@ -338,8 +401,22 @@ export default function CarForm() {
               </View>
             </View>
 
+            {/* KILOMETER */}
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Kilometer</Text>
+              <View style={styles.labelContainer}>
+                <Text style={styles.label}>Kilometer</Text>
+                <TouchableOpacity onPress={() => setShowTooltip(showTooltip === "mileage" ? null : "mileage")}>
+                  <HelpCircle size={18} color={Colors.primary} />
+                </TouchableOpacity>
+              </View>
+
+              {showTooltip === "mileage" && (
+                <View style={styles.tooltip}>
+                  <AlertTriangle size={16} color={Colors.warning} />
+                  <Text style={styles.tooltipText}>{"Lihat angka speedometer mobil. Itu jarak yang sudah ditempuh mobil, Tulis angkanya (contohnya: 120.000)."}</Text>
+                </View>
+              )}
+
               <TextInput
                 style={[
                   styles.input,
@@ -361,8 +438,22 @@ export default function CarForm() {
               )}
             </View>
 
+            {/* NOMOR POLISI */}
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Nomor Polisi</Text>
+              <View style={styles.labelContainer}>
+                <Text style={styles.label}>Nomor Polisi</Text>
+                <TouchableOpacity onPress={() => setShowTooltip(showTooltip === "plateNumber" ? null : "plateNumber")}>
+                  <HelpCircle size={18} color={Colors.primary} />
+                </TouchableOpacity>
+              </View>
+
+              {showTooltip === "plateNumber" && (
+                <View style={styles.tooltip}>
+                  <AlertTriangle size={16} color={Colors.warning} />
+                  <Text style={styles.tooltipText}>{"Lihat plat nomor mobil di depan, belakang, atau cek di STNK. Tulis persis seperti yang tertulis (contohnya: G 1234 XYZ)."}</Text>
+                </View>
+              )}
+
               <TextInput
                 style={[
                   styles.input,
@@ -424,6 +515,11 @@ const styles = StyleSheet.create({
   title: { fontSize: 20, fontFamily: "PoppinsBold", color: Colors.text },
   form: { gap: 16 },
   inputGroup: { gap: 6 },
+  labelContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
   label: { fontSize: 14, fontFamily: "PoppinsSemiBold", color: Colors.text },
   input: {
     backgroundColor: Colors.card,
@@ -435,18 +531,32 @@ const styles = StyleSheet.create({
     color: Colors.text,
     fontFamily: "PoppinsMedium",
   },
-  // Style baru untuk kotak yang error (merah)
   inputError: {
     borderColor: "#ef4444",
     backgroundColor: "#fef2f2",
   },
-  // Style baru untuk tulisan error merah di bawah kolom
   errorText: {
     color: "#ef4444",
     fontSize: 12,
     fontFamily: "PoppinsMedium",
     marginTop: -2,
     marginLeft: 4,
+  },
+  tooltip: {
+    flexDirection: "row",
+    gap: 8,
+    backgroundColor: Colors.warning + "15",
+    borderRadius: 12,
+    padding: 12,
+    marginTop: 2,
+    marginBottom: 4,
+  },
+  tooltipText: {
+    flex: 1,
+    fontSize: 13,
+    color: Colors.textSecondary,
+    lineHeight: 18,
+    fontFamily: "PoppinsMedium",
   },
   row: { flexDirection: "row", gap: 12 },
   transmissionContainer: { flexDirection: "row", gap: 10 },

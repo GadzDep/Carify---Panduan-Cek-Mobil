@@ -1,6 +1,6 @@
 import createContextHook from "@nkzw/create-context-hook";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useCallback, useState, useEffect } from "react";
+import { useCallback, useState, useEffect, useRef } from "react";
 import {
   Inspection,
   InspectionMode,
@@ -30,7 +30,14 @@ export const [InspectionProvider, useInspection] = createContextHook(() => {
   );
   const [isLoading, setIsLoading] = useState(true);
 
-  // Load awal data dari storage
+  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Jangkar penyimpan state terbaru tanpa memicu render ulang layar
+  const inspectionsRef = useRef(inspections);
+  useEffect(() => {
+    inspectionsRef.current = inspections;
+  }, [inspections]);
+
   useEffect(() => {
     loadInspections();
   }, []);
@@ -39,7 +46,17 @@ export const [InspectionProvider, useInspection] = createContextHook(() => {
     try {
       const stored = await AsyncStorage.getItem(STORAGE_KEY);
       if (stored) {
-        setInspections(JSON.parse(stored));
+        const parsed: Inspection[] = JSON.parse(stored);
+        
+        const cleanInspections = parsed.filter(
+          (i) => i.status === "completed" || i.carData.brand !== "" || i.carData.plateNumber !== ""
+        );
+
+        setInspections(cleanInspections);
+
+        if (cleanInspections.length !== parsed.length) {
+          await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(cleanInspections));
+        }
       }
     } catch (error) {
       console.error("Error loading inspections:", error);
@@ -57,32 +74,59 @@ export const [InspectionProvider, useInspection] = createContextHook(() => {
     }
   }, []);
 
-  // FUNGSI AUTO-SAVE: Menyimpan tanpa mengubah status jadi completed
-  const saveDraft = useCallback(async (updatedInspection: Inspection) => {
-    try {
-      const stored = await AsyncStorage.getItem(STORAGE_KEY);
-      let currentList: Inspection[] = stored ? JSON.parse(stored) : [];
-
-      const existingIndex = currentList.findIndex(
-        (i) => i.id === updatedInspection.id,
-      );
-
-      if (existingIndex !== -1) {
-        currentList[existingIndex] = updatedInspection;
-      } else {
-        currentList = [updatedInspection, ...currentList];
+  // Engine Auto-Save: Menyimpan otomatis 1 detik setelah berhenti klik/ketik
+  useEffect(() => {
+    // FIX BUG: Hanya auto-save jika status draft DAN ada data mobil (brand/plat tidak kosong)
+    if (
+      currentInspection && 
+      currentInspection.status === "draft" && 
+      (currentInspection.carData.brand.trim() !== "" || currentInspection.carData.plateNumber.trim() !== "")
+    ) {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
       }
 
-      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(currentList));
-      setInspections(currentList);
-    } catch (error) {
-      console.error("Error saving draft:", error);
+      saveTimeoutRef.current = setTimeout(() => {
+        setInspections((prevList) => {
+          const existingIndex = prevList.findIndex(
+            (i) => i.id === currentInspection.id,
+          );
+
+          let newList: Inspection[];
+          if (existingIndex !== -1) {
+            newList = [...prevList];
+            newList[existingIndex] = currentInspection;
+          } else {
+            newList = [currentInspection, ...prevList];
+          }
+
+          AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(newList)).catch(
+            (err) => console.error("Error saving draft:", err)
+          );
+
+          return newList;
+        });
+      }, 1000); 
     }
+  }, [currentInspection]);
+
+  const saveDraft = useCallback(async (updatedInspection: Inspection) => {
+    const currentList = inspectionsRef.current;
+    const existingIndex = currentList.findIndex((i) => i.id === updatedInspection.id);
+    let newList = [...currentList];
+    
+    if (existingIndex !== -1) {
+      newList[existingIndex] = updatedInspection;
+    } else {
+      newList = [updatedInspection, ...newList];
+    }
+    
+    setInspections(newList);
+    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(newList));
   }, []);
 
   const createInspection = useCallback(
     async (mode: InspectionMode) => {
-      // Paksa reset data lama agar tidak bocor ke data baru
       setCurrentInspection(null);
 
       const newInspection: Inspection = {
@@ -110,51 +154,34 @@ export const [InspectionProvider, useInspection] = createContextHook(() => {
       };
 
       setCurrentInspection(newInspection);
-      await saveDraft(newInspection);
       return newInspection;
     },
-    [saveDraft],
+    [],
   );
 
-  const updateCarData = useCallback(
-    async (carData: CarData) => {
-      let updated: Inspection | null = null;
-
-      setCurrentInspection((prev) => {
-        if (!prev) return null;
-        updated = { ...prev, carData };
-        return updated;
-      });
-
-      if (updated) await saveDraft(updated);
-    },
-    [saveDraft],
-  );
+  const updateCarData = useCallback((carData: CarData) => {
+    setCurrentInspection((prev) => {
+      if (!prev) return null;
+      return { ...prev, carData };
+    });
+  }, []);
 
   const updateSellerTransparency = useCallback(
-    async (sellerTransparency: SellerTransparency) => {
-      let updated: Inspection | null = null;
-
+    (sellerTransparency: SellerTransparency) => {
       setCurrentInspection((prev) => {
         if (!prev) return null;
-        updated = { ...prev, sellerTransparency };
-        return updated;
+        return { ...prev, sellerTransparency };
       });
-
-      // Tunggu sampai data benar-benar tersimpan ke storage
-      if (updated) await saveDraft(updated);
     },
-    [saveDraft],
+    [],
   );
 
   const updateChecklistItem = useCallback(
-    async (
+    (
       categoryId: string,
       itemId: string,
       updates: Partial<Inspection["categories"][0]["items"][0]>,
     ) => {
-      let updated: Inspection | null = null;
-
       setCurrentInspection((prev) => {
         if (!prev) return null;
 
@@ -169,13 +196,10 @@ export const [InspectionProvider, useInspection] = createContextHook(() => {
           };
         });
 
-        updated = { ...prev, categories: newCategories };
-        return updated;
+        return { ...prev, categories: newCategories };
       });
-
-      if (updated) await saveDraft(updated);
     },
-    [saveDraft],
+    [],
   );
 
   const calculateResult = useCallback(
@@ -258,28 +282,24 @@ export const [InspectionProvider, useInspection] = createContextHook(() => {
     }
 
     await saveInspections(newInspections);
-    setCurrentInspection(completedInspection);
+    setCurrentInspection(null); 
     return completedInspection;
   }, [currentInspection, inspections, saveInspections]);
 
-  // ---> INI BAGIAN YANG DIPERBAIKI <---
   const deleteInspection = useCallback(
     async (id: string) => {
       try {
-        // 1. Ambil data terbaru langsung dari storage (menghindari stale state saat di-loop)
         const stored = await AsyncStorage.getItem(STORAGE_KEY);
         const currentList: Inspection[] = stored ? JSON.parse(stored) : [];
 
-        // 2. Filter data untuk membuang ID yang dihapus
         const newInspections = currentList.filter((i) => i.id !== id);
 
-        // 3. Simpan dan update state
         await saveInspections(newInspections);
       } catch (error) {
         console.error("Error deleting inspection:", error);
       }
     },
-    [saveInspections], // State 'inspections' dihapus dari dependensi agar tidak bocor
+    [saveInspections],
   );
 
   const deleteAllInspections = useCallback(async () => {
@@ -288,19 +308,19 @@ export const [InspectionProvider, useInspection] = createContextHook(() => {
   }, []);
 
   const getInspectionById = useCallback(
-    (id: string) => inspections.find((i) => i.id === id) || null,
-    [inspections],
+    (id: string) => inspectionsRef.current.find((i) => i.id === id) || null,
+    [],
   );
 
   const setInspectionById = useCallback(
     (id: string) => {
-      const inspection = inspections.find((i) => i.id === id) || null;
+      const inspection = inspectionsRef.current.find((i) => i.id === id) || null;
       setCurrentInspection(
         inspection ? JSON.parse(JSON.stringify(inspection)) : null,
       );
       return inspection;
     },
-    [inspections],
+    [],
   );
 
   const clearCurrentInspection = useCallback(() => {

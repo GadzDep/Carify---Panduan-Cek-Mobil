@@ -91,17 +91,18 @@ export default function InspectionScreen() {
   const scrollViewRef = useRef<ScrollView>(null);
   const itemPositions = useRef<Record<string, number>>({});
 
-  // ⭐ PERBAIKAN UTAMA: Jangan jalankan setInspectionById kalau ID yang dikirim
-  // sama dengan ID dari draft yang sedang berjalan (currentInspection).
-  // Ini mencegah bug "Memuat pengecekan..." terus-terusan karena data baru keriset!
+  // ⭐ PERBAIKAN LOGIKA: Memastikan ID disinkronkan dengan benar dan mencegah data nyampur.
   useEffect(() => {
-    if (id && currentInspection?.id !== id) {
-      setInspectionById(id as string);
+    const validId = id as string;
+
+    // Jika ada ID dari URL dan berbeda dengan currentInspection, muat ulang datanya.
+    if (validId && currentInspection?.id !== validId) {
+      setInspectionById(validId);
     }
   }, [id, currentInspection?.id]);
 
-  // ⭐ PERBAIKAN TAMBAHAN: Jaring pengaman tampilan loading
-  if (!currentInspection) {
+  // Jaring pengaman tampilan loading
+  if (!currentInspection || (id && currentInspection.id !== id)) {
     return (
       <View style={styles.center}>
         {!id ? (
@@ -109,7 +110,7 @@ export default function InspectionScreen() {
             <Text
               style={{
                 color: Colors.danger,
-                fontFamily: "PoppinsBold", // Diganti
+                fontFamily: "PoppinsBold",
               }}
             >
               Error: ID Pengecekan tidak ditemukan!
@@ -283,7 +284,10 @@ export default function InspectionScreen() {
 
       {/* Progress */}
       <View style={styles.progressContainer}>
-        <ProgressBar progress={completedItems} total={totalItems} />
+        {/* ⭐ PERBAIKAN: Dibungkus View flex: 1 supaya ngga mendorong text keluar layar */}
+        <View style={{ flex: 1 }}>
+          <ProgressBar progress={completedItems} total={totalItems} />
+        </View>
         <Text style={styles.progressText}>
           {completedItems}/{totalItems}
         </Text>
@@ -469,13 +473,13 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 17,
     color: Colors.text,
-    fontFamily: "PoppinsBold", // Diganti
+    fontFamily: "PoppinsBold",
   },
   headerSubtitle: {
     fontSize: 12,
     color: Colors.textMuted,
     marginTop: 2,
-    fontFamily: "PoppinsMedium", // Diganti
+    fontFamily: "PoppinsMedium",
   },
   placeholder: {
     width: 40,
@@ -488,9 +492,9 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   progressText: {
-    fontSize: 13,
+    fontSize: 12,
     color: Colors.textSecondary,
-    fontFamily: "PoppinsSemiBold", // Diganti
+    fontFamily: "PoppinsSemiBold",
   },
   stepsContainer: {
     flexDirection: "row",
@@ -524,16 +528,16 @@ const styles = StyleSheet.create({
   },
   stepIcon: {
     fontSize: 20,
-    fontFamily: "PoppinsMedium", // Diganti
+    fontFamily: "PoppinsMedium",
   },
   stepLabel: {
     fontSize: 11,
     color: Colors.textMuted,
-    fontFamily: "PoppinsMedium", // Diganti
+    fontFamily: "PoppinsMedium",
   },
   stepLabelActive: {
     color: Colors.primary,
-    fontFamily: "PoppinsSemiBold", // Diganti (fontWeight dihapus)
+    fontFamily: "PoppinsSemiBold",
   },
   content: {
     flex: 1,
@@ -565,7 +569,7 @@ const styles = StyleSheet.create({
   itemNumberText: {
     fontSize: 13,
     color: "white",
-    fontFamily: "PoppinsBold", // Diganti
+    fontFamily: "PoppinsBold",
   },
   itemTitleContainer: {
     flex: 1,
@@ -575,7 +579,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: Colors.text,
     lineHeight: 22,
-    fontFamily: "PoppinsSemiBold", // Diganti
+    fontFamily: "PoppinsSemiBold",
   },
   tooltipBtn: {
     padding: 4,
@@ -593,7 +597,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: Colors.textSecondary,
     lineHeight: 18,
-    fontFamily: "PoppinsMedium", // Diganti
+    fontFamily: "PoppinsMedium",
   },
   answerContainer: {
     flexDirection: "row",
@@ -615,7 +619,7 @@ const styles = StyleSheet.create({
   answerLabel: {
     fontSize: 13,
     color: Colors.text,
-    fontFamily: "PoppinsSemiBold", // Diganti
+    fontFamily: "PoppinsSemiBold",
   },
   answerLabelActive: {
     color: "white",
@@ -629,7 +633,7 @@ const styles = StyleSheet.create({
     minHeight: 60,
     textAlignVertical: "top",
     marginBottom: 12,
-    fontFamily: "PoppinsMedium", // Diganti
+    fontFamily: "PoppinsMedium",
   },
   photoBtn: {
     flexDirection: "row",
@@ -645,7 +649,7 @@ const styles = StyleSheet.create({
   photoText: {
     fontSize: 14,
     color: Colors.primary,
-    fontFamily: "PoppinsSemiBold", // Diganti
+    fontFamily: "PoppinsSemiBold",
   },
   photoPreview: {
     width: 60,
@@ -683,7 +687,7 @@ const styles = StyleSheet.create({
   navBtnText: {
     fontSize: 16,
     color: Colors.text,
-    fontFamily: "PoppinsSemiBold", // Diganti
+    fontFamily: "PoppinsSemiBold",
   },
   navBtnTextPrimary: {
     color: "white",

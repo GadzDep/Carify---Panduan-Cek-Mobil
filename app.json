@@ -4,12 +4,12 @@
     "slug": "carify_panduan_cek_mobil",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon-carify.png",
+    "icon": "./assets/images/carify-icon.png",
     "scheme": "rork-app",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/images/splash-carify.png",
+      "image": "./assets/images/carify-icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
@@ -19,8 +19,8 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon-carify.png",
-        "backgroundColor": "#ffffff"
+        "foregroundImage": "./assets/images/carify-icon_adaptive_fore.png",
+        "backgroundColor": "#03A9F4"
       },
       "package": "rpl.skansaka.carify_panduan_cek_mobil"
     },
